@@ -1,10 +1,6 @@
 [
   {
-    "title": "Title #1",
-    "body": "Hello, World 1!"
-  },
-  {
-    "title": "Title #2",
-    "body": "Hello, World 2!"
+    "h3": "Title #1",
+    "div": "Hello, World 1!"
   }
 ]

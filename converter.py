@@ -34,14 +34,12 @@ class JsonConverter:
     def convert(self, clear_tags=True):
         """Converts list of dicts to HTML markup.
 
-        Dicts in list must have the specified format:
-            {
-              "title": "Title #2",
-              "body": "Hello, World 2!"
-            }
+        Dicts in list must have tags names as keys and data which needs
+        to be rendered inside tag as values.
 
         Args:
-            clear_tags (bool): Should or not text to be cleaned from tags.
+            clear_tags (bool): Should or not value inside tag to be cleaned
+            from tags.
 
         Returns:
             str: Generated HTML markup.
@@ -50,10 +48,8 @@ class JsonConverter:
 
         result = []
         for item in self.items:
-            title = item["title"]
-            body = item["body"]
-            if clear_tags:
-                title = self.clear_tags(title)
-                body = self.clear_tags(body)
-            result.append(f'<h1>{title}</h1><p>{body}</p>')
+            for tag, value in item.items():
+                if clear_tags:
+                    value = self.clear_tags(value)
+                result.append(f'<{tag}>{value}</{tag}>')
         return ''.join(result)
