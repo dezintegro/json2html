@@ -1,10 +1,12 @@
-[
+[ 
   {
-    "h3": "Title #1",
-    "div": "Hello, World 1!"
+    "span": "Title #1",
+    "content": [
+      {
+        "p": "Example 1",
+        "header": "header 1"
+      }
+    ]
   },
-  {
-    "h3": "Title #2",
-    "div": "Hello, World 2!"
-  }
+  {"div": "div 1"}
 ]

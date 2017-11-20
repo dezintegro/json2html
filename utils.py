@@ -12,6 +12,5 @@ def load_data(data_source):
         dict: In other cases.
 
     """
-
     with open(data_source) as data_source:
         return json.load(data_source)

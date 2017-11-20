@@ -9,16 +9,18 @@ class TestUtils(unittest.TestCase):
     def test_load_data(self):
         data = [
             {
-                "h3": "Title #1",
-                "div": "Hello, World 1!"
+                "span": "Title #1",
+                "content": [
+                    {
+                        "p": "Example 1",
+                        "header": "header 1"
+                    }
+                ]
             },
-            {
-                "h3": "Title #2",
-                "div": "Hello, World 2!"
-            }
+            {"div": "div 1"}
         ]
         loaded_data = load_data('source.json')
-        self.assertEqual(loaded_data, data)
+        self.assertEqual(data, loaded_data)
 
 
 class TestConverterMethods(unittest.TestCase):
@@ -26,18 +28,21 @@ class TestConverterMethods(unittest.TestCase):
     def test_list_converter(self):
         data = [
             {
-                "h3": "Title #1",
-                "div": "Hello, World 1!"
+                "span": "Title #1",
+                "content": [
+                    {
+                        "p": "Example 1",
+                        "header": "header 1"
+                    }
+                ]
             },
-            {
-                "h3": "Title #2",
-                "div": "Hello, World 2!"
-            }
+            {"div": "div 1"}
         ]
-        html = '<ul><li><h3>Title #1</h3><div>Hello, World 1!</div></li>' \
-               '<li><h3>Title #2</h3><div>Hello, World 2!</div></li></ul>'
+        html = '<ul><li><span>Title #1</span><content><ul><li>' \
+               '<p>Example 1</p><header>header 1</header></li>' \
+               '</ul></content></li><li><div>div 1</div></li></ul>'
         converter = JsonConverter(data)
-        self.assertEqual(converter.convert(), html)
+        self.assertEqual(html, converter.convert())
 
     def test_dict_converter(self):
         data = {
@@ -46,7 +51,7 @@ class TestConverterMethods(unittest.TestCase):
         }
         html = '<h3>Title #1</h3><div>Hello, World 1!</div>'
         converter = JsonConverter(data)
-        self.assertEqual(converter.convert(), html)
+        self.assertEqual(html, converter.convert())
 
     def test_tags_cleaner(self):
         data = {
@@ -59,11 +64,11 @@ class TestConverterMethods(unittest.TestCase):
 
         converter = JsonConverter(data)
         converted_data = converter.convert()
-        self.assertEqual(converted_data, clean_data)
+        self.assertEqual(clean_data, converted_data)
 
         converter = JsonConverter(data, False)
         converted_data = converter.convert()
-        self.assertEqual(converted_data, unclean_data)
+        self.assertEqual(unclean_data, converted_data)
 
 
 if __name__ == '__main__':

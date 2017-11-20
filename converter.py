@@ -44,7 +44,8 @@ class JsonConverter:
         """Converts dict to list of strings which contains HTML markup.
 
          Dict must have tags names as keys and data which needs
-         to be rendered inside tag as values.
+         to be rendered inside tag as values. Values may contain lists. In
+         this case lists will be additionally wrapped in <ul> and <li> tags.
 
          Args:
              item (dict): Dict with tag names and values to convert
@@ -52,32 +53,59 @@ class JsonConverter:
          Returns:
              list[str]: List of generated strings with markup.
         """
-
         result = []
         for tag, value in item.items():
+            if type(value) == list:
+                result.extend(self._convert_nested_tag(tag, value))
+                return result
             if self.safe_convert:
                 value = self.clear_tags(value)
             result.append(f'<{tag}>{value}</{tag}>')
         return result
 
-    def convert(self):
-        """Converts dict or list of dicts in `self.items` to HTML markup.
+    def _convert_nested_tag(self, tag, value):
+        """Wraps in the tag nested list of elements
 
-        If type of `self.items` is list items will be wrapped into
-        <ul> and <li> tags.
+        Args:
+            tag (str): The tag in which the elements will be wrapped.
+            value (list): List of elements
+
+        Returns:
+            list: Result of converting `value` wrapped into `tag`
+
+        """
+        result = [f'<{tag}>']
+        result.extend(self.convert(value))
+        result.append(f'</{tag}>')
+        return result
+
+    def _convert_list(self, items):
+        """Wraps list of elements in ul and li tags
+
+        Args:
+            items (list): List of elements which will be wrapped
+
+        Returns:
+            list: Result of converting `items` wrapped into ul and li tags
+
+        """
+        result = ['<ul>']
+        for item in items:
+            result.extend(self._convert_nested_tag('li', item))
+        result.append('</ul>')
+        return result
+
+    def convert(self, items=None):
+        """Converts `items` to HTML markup.
 
         Returns:
             str: Generated HTML markup.
 
         """
-
-        if type(self.items) == list:
-            result = ['<ul>']
-            for item in self.items:
-                result.append('<li>')
-                result.extend(self._convert_dict(item))
-                result.append('</li>')
-            result.append('</ul>')
+        if not items:
+            items = self.items
+        if type(items) == list:
+            result = self._convert_list(items)
         else:
-            result = self._convert_dict(self.items)
+            result = self._convert_dict(items)
         return ''.join(result)
