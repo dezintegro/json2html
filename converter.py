@@ -1,6 +1,5 @@
 """JSON data to HTML markup converter."""
-
-
+import html
 import re
 
 
@@ -20,16 +19,18 @@ class JsonConverter:
             safe_convert (bool): Should or not value inside tag to be cleaned
                 from tags.
         Raises:
-            ValueError: If type of `items` not list or dict
+            ValueError: If type of `items` not list or dict.
+
         """
         if type(items) not in [list, dict]:
             raise ValueError('Items should be `list` or `dict` object.')
         self.items = items
         self.safe_convert = safe_convert
-        self.tag_re = re.compile(r'(<!--.*?-->|<[^>]*>)')
+        self.class_re = re.compile(r'\.(?P<class>[\w+|-]+)')
+        self.id_re = re.compile(r'#(?P<id>[\w+|-]+)')
 
     def clear_tags(self, text):
-        """Cleans the specified text from HTML tags.
+        """Escapes HTML tags in specified text.
 
         Args:
             text: Text which should to be cleaned from tags.
@@ -38,7 +39,58 @@ class JsonConverter:
             str: Cleaned text.
 
         """
-        return self.tag_re.sub('', text)
+        return html.escape(text)
+
+    def _get_tag(self, tag):
+        """Extracts HTML tag from string with tag and styles.
+
+        Args:
+            tag (str): String with tag and styles.
+
+        Returns:
+            str: Extracted tag.
+
+        """
+        tag = re.split(r'[.#]', tag)
+        return tag[0]
+
+    def _convert_style_data(self, tag):
+        """Extracts style data from tag and converts it into markup attributes.
+
+        Args:
+            tag (str): String with tag and styles.
+
+        Returns:
+            str: String with styles converted in markup.
+
+        """
+        tag_id = self.id_re.search(tag)
+        if tag_id:
+            tag_id = f' id="{tag_id.groups()[0]}"'
+
+        tag_classes = self.class_re.finditer(tag)
+        classes = [tag_class.groups()[0] for tag_class in tag_classes]
+        if classes:
+            classes = f' class="{" ".join(classes)}"'
+
+        style = f'{tag_id or ""}{classes or ""}'
+        return style
+
+    def _convert_nested_tag(self, tag, value):
+        """Wraps in the tag nested list of elements.
+
+        Args:
+            tag (str): The tag in which the elements will be wrapped.
+            value (list): List of elements
+
+        Returns:
+            list: Result of converting `value` wrapped into `tag`.
+
+        """
+        result = [f'<{tag}>']
+        result.extend(self.convert(value))
+        result.append(f'</{tag}>')
+        return result
 
     def _convert_dict(self, item):
         """Converts dict to list of strings which contains HTML markup.
@@ -48,7 +100,7 @@ class JsonConverter:
          this case lists will be additionally wrapped in <ul> and <li> tags.
 
          Args:
-             item (dict): Dict with tag names and values to convert
+             item (dict): Dict with tag names and values to convert.
 
          Returns:
              list[str]: List of generated strings with markup.
@@ -60,33 +112,19 @@ class JsonConverter:
                 return result
             if self.safe_convert:
                 value = self.clear_tags(value)
-            result.append(f'<{tag}>{value}</{tag}>')
-        return result
-
-    def _convert_nested_tag(self, tag, value):
-        """Wraps in the tag nested list of elements
-
-        Args:
-            tag (str): The tag in which the elements will be wrapped.
-            value (list): List of elements
-
-        Returns:
-            list: Result of converting `value` wrapped into `tag`
-
-        """
-        result = [f'<{tag}>']
-        result.extend(self.convert(value))
-        result.append(f'</{tag}>')
+            style = self._convert_style_data(tag)
+            tag = self._get_tag(tag)
+            result.append(f'<{tag}{style}>{value}</{tag}>')
         return result
 
     def _convert_list(self, items):
-        """Wraps list of elements in ul and li tags
+        """Wraps list of elements in ul and li tags.
 
         Args:
-            items (list): List of elements which will be wrapped
+            items (list): List of elements which will be wrapped.
 
         Returns:
-            list: Result of converting `items` wrapped into ul and li tags
+            list: Result of converting `items` wrapped into ul and li tags.
 
         """
         result = ['<ul>']
